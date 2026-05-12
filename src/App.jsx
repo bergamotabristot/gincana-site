@@ -123,26 +123,32 @@ export default function GincanaSite() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '25px' }}>
           
           <div style={cardStyle}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-              <h2>🏆 Pontuação</h2>
-              {modoEditor && ranking.length === 0 && <button onClick={adicionarEquipe} style={{ background: '#22c55e', color: 'white', border: 'none', padding: '8px', borderRadius: '5px' }}>+ Criar Time</button>}
-            </div>
-            {ranking.map((time) => (
-              <div key={time.id} style={{ textAlign: 'center' }}>
-                <h3 style={{ fontSize: '1.5rem', marginBottom: '5px' }}>{time.equipe}</h3>
-                <div style={{ fontSize: '3.5rem', fontWeight: 'bold', color: '#4ade80', marginBottom: '15px' }}>
-                  {time.pontos} <span style={{fontSize: '1rem', color: '#94a3b8'}}>pts</span>
-                </div>
-                {modoEditor && (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'center' }}>
-                    <button onClick={() => somarPontos(time.id, time.pontos, 1)} style={{ padding: '8px', background: '#334155', color: 'white', border: '1px solid #4ade80', borderRadius: '5px' }}>+1</button>
-                    <button onClick={() => somarPontos(time.id, time.pontos, 10)} style={{ padding: '8px', background: '#334155', color: 'white', border: '1px solid #4ade80', borderRadius: '5px' }}>+10</button>
-                    <button onClick={() => resetarPontos(time.id)} style={{ padding: '8px', background: '#450a0a', color: 'white', border: 'none', borderRadius: '5px' }}>Zerar</button>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
+  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+    <h2>🏆 Pontuação</h2>
+    {modoEditor && ranking.length === 0 && (
+      <button onClick={adicionarEquipe} style={{ background: '#22c55e', color: 'white', border: 'none', padding: '8px', borderRadius: '5px' }}>
+        + Criar Time
+      </button>
+    )}
+  </div>
+  {ranking.map((time) => (
+    <div key={time.id} style={{ textAlign: 'center' }}>
+      <h3 style={{ fontSize: '1.5rem', marginBottom: '5px' }}>{time.equipe}</h3>
+      <div style={{ fontSize: '3.5rem', fontWeight: 'bold', color: '#4ade80', marginBottom: '15px' }}>
+        {time.pontos} <span style={{ fontSize: '1rem', color: '#94a3b8' }}>pts</span>
+      </div>
+      {modoEditor && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'center' }}>
+          <button onClick={() => somarPontos(time.id, time.pontos, 1)} style={{ padding: '8px 12px', background: '#334155', color: 'white', border: '1px solid #4ade80', borderRadius: '5px', cursor: 'pointer' }}>+1</button>
+          <button onClick={() => somarPontos(time.id, time.pontos, 10)} style={{ padding: '8px 12px', background: '#334155', color: 'white', border: '1px solid #4ade80', borderRadius: '5px', cursor: 'pointer' }}>+10</button>
+          <button onClick={() => somarPontos(time.id, time.pontos, 100)} style={{ padding: '8px 12px', background: '#4ade80', color: '#0f172a', border: 'none', borderRadius: '5px', fontWeight: 'bold', cursor: 'pointer' }}>+100</button>
+          <button onClick={() => resetarPontos(time.id)} style={{ padding: '8px 12px', background: '#450a0a', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>Zerar</button>
+          <button onClick={() => removerDocumento('ranking', time.id)} style={{ padding: '8px', background: 'transparent', color: '#ef4444', border: 'none', cursor: 'pointer' }}>🗑️</button>
+        </div>
+      )}
+    </div>
+  ))}
+</div>
 
           <div style={cardStyle}>
             <h2>⚽ Placar em Tempo Real</h2>
