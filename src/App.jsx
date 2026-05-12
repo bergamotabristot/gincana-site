@@ -131,18 +131,39 @@ export default function GincanaSite() {
       </button>
     )}
   </div>
+  
   {ranking.map((time) => (
-    <div key={time.id} style={{ textAlign: 'center' }}>
-      <h3 style={{ fontSize: '1.5rem', marginBottom: '5px' }}>{time.equipe}</h3>
-      <div style={{ fontSize: '3.5rem', fontWeight: 'bold', color: '#4ade80', marginBottom: '15px' }}>
-        {time.pontos} <span style={{ fontSize: '1rem', color: '#94a3b8' }}>pts</span>
+    <div key={time.id} style={{ textAlign: 'center', padding: '15px 0', borderBottom: ranking.length > 1 ? '1px solid #334155' : 'none' }}>
+      <h3 style={{ fontSize: '1.8rem', marginBottom: '10px', color: '#f8fafc' }}>{time.equipe}</h3>
+      
+      {/* Pontuação com margem para não grudar */}
+      <div style={{ fontSize: '4.5rem', fontWeight: 'bold', color: '#4ade80', margin: '20px 0' }}>
+        {time.pontos} <span style={{ fontSize: '1.2rem', color: '#94a3b8' }}>pts</span>
       </div>
+
       {modoEditor && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'center' }}>
-          <button onClick={() => somarPontos(time.id, time.pontos, 10)} style={{ padding: '8px 12px', background: '#334155', color: 'white', border: '1px solid #4ade80', borderRadius: '5px', cursor: 'pointer' }}>+10</button>
-          <button onClick={() => somarPontos(time.id, time.pontos, 100)} style={{ padding: '8px 12px', background: '#4ade80', color: '#0f172a', border: 'none', borderRadius: '5px', fontWeight: 'bold', cursor: 'pointer' }}>+100</button>
-          <button onClick={() => resetarPontos(time.id)} style={{ padding: '8px 12px', background: '#450a0a', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>Zerar</button>
-          <button onClick={() => removerDocumento('ranking', time.id)} style={{ padding: '8px', background: 'transparent', color: '#ef4444', border: 'none', cursor: 'pointer' }}>🗑️</button>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'center', marginTop: '20px' }}>
+          {/* Botões de +100 e -100 */}
+          <button onClick={() => somarPontos(time.id, time.pontos, 100)} style={{ padding: '10px 15px', background: '#22c55e', color: 'white', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>
+            +100
+          </button>
+          
+          <button onClick={() => somarPontos(time.id, time.pontos, -100)} style={{ padding: '10px 15px', background: '#991b1b', color: 'white', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>
+            -100
+          </button>
+
+          {/* Outras opções */}
+          <button onClick={() => somarPontos(time.id, time.pontos, 10)} style={{ padding: '10px 15px', background: '#334155', color: 'white', border: '1px solid #4ade80', borderRadius: '6px', cursor: 'pointer' }}>
+            +10
+          </button>
+          
+          <button onClick={() => resetarPontos(time.id)} style={{ padding: '10px 15px', background: '#450a0a', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
+            Zerar
+          </button>
+          
+          <button onClick={() => removerDocumento('ranking', time.id)} style={{ padding: '10px', background: 'transparent', color: '#ef4444', border: 'none', cursor: 'pointer' }}>
+            🗑️
+          </button>
         </div>
       )}
     </div>
