@@ -169,7 +169,7 @@ export default function GincanaSite() {
 </div>
 
           <div style={cardStyle}>
-            <h2>⚽ Placar em Tempo Real</h2>
+            <h2> Placar em Tempo Real</h2>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                <tbody>
                 {jogos.slice(-4).map((jogo) => ( // Mostra apenas os 4 últimos jogos aqui
