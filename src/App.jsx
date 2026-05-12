@@ -16,44 +16,27 @@ export default function GincanaSite() {
   const [ranking, setRanking] = useState([]);
   const [jogos, setJogos] = useState([]);
   const [atividades, setAtividades] = useState([]);
+  const [diaAtivo, setDiaAtivo] = useState('Dia 1');
 
-  // Estados para novos cadastros
   const [novoJogo, setNovoJogo] = useState({
-    esporte: '',
-    horario: '',
-    time1: '',
-    placar1: '-',
-    placar2: '-',
-    time2: '',
-    dia: 'Dia 1',
+    esporte: '', horario: '', time1: '', placar1: '-', placar2: '-', time2: '', dia: 'Dia 1',
   });
 
   const [novaAtividade, setNovaAtividade] = useState({
-    nome: '',
-    horario: '',
-    local: '',
-    dia: 'Dia 1',
+    nome: '', horario: '', local: '', dia: 'Dia 1',
   });
 
-  // Carregar dados em tempo real do Firebase
   useEffect(() => {
     const unsubRanking = onSnapshot(collection(db, 'ranking'), (snapshot) => {
       setRanking(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
     });
-
     const unsubJogos = onSnapshot(collection(db, 'jogos'), (snapshot) => {
       setJogos(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
     });
-
     const unsubAtividades = onSnapshot(collection(db, 'atividades'), (snapshot) => {
       setAtividades(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
     });
-
-    return () => {
-      unsubRanking();
-      unsubJogos();
-      unsubAtividades();
-    };
+    return () => { unsubRanking(); unsubJogos(); unsubAtividades(); };
   }, []);
 
   const normalizarHorario = (horario) => {
@@ -65,20 +48,22 @@ export default function GincanaSite() {
     return `${h.slice(0, 2)}:${h.slice(2, 4)}`;
   };
 
-  const entrarModoEditor = () => {
-    const senha = prompt('Digite a senha');
-    if (senha === SENHA_EDITOR) setModoEditor(true);
-    else alert('Senha incorreta');
+  const adicionarEquipe = async () => {
+    const nome = prompt('Nome da equipe (Ex: Meu Time)');
+    if (!nome) return;
+    await addDoc(collection(db, 'ranking'), { equipe: nome, pontos: 0 });
   };
 
-  const adicionarEquipe = async () => {
-    const nome = prompt('Nome da equipe');
-    const pontos = prompt('Pontuação');
-    if (!nome) return;
-    await addDoc(collection(db, 'ranking'), {
-      equipe: nome,
-      pontos: Number(pontos),
+  const somarPontos = async (id, pontosAtuais, incremento) => {
+    await updateDoc(doc(db, 'ranking', id), {
+      pontos: Number(pontosAtuais) + incremento,
     });
+  };
+
+  const resetarPontos = async (id) => {
+    if(confirm("Zerar pontuação?")) {
+        await updateDoc(doc(db, 'ranking', id), { pontos: 0 });
+    }
   };
 
   const adicionarJogo = async () => {
@@ -100,9 +85,7 @@ export default function GincanaSite() {
   };
 
   const removerDocumento = async (colecao, id) => {
-    if(confirm("Tem certeza que deseja excluir?")) {
-        await deleteDoc(doc(db, colecao, id));
-    }
+    if(confirm("Excluir item?")) await deleteDoc(doc(db, colecao, id));
   };
 
   const atualizarPlacar = async (id, campo, valor) => {
@@ -110,118 +93,75 @@ export default function GincanaSite() {
     await updateDoc(doc(db, 'jogos', id), { [campo]: v });
   };
 
+  // UNIÃO DE JOGOS E ATIVIDADES PARA O CRONOGRAMA
   const cronogramaCompleto = [...jogos, ...atividades]
-    .map((item) => ({
-      ...item,
-      horario: normalizarHorario(item.horario),
-    }))
+    .map((item) => ({ ...item, horario: normalizarHorario(item.horario) }))
     .sort((a, b) => a.horario.localeCompare(b.horario));
 
-  const containerStyle = {
-    background: '#0f172a',
-    minHeight: '100vh',
-    color: 'white',
-    fontFamily: 'Arial, sans-serif',
-    padding: '20px',
-  };
-
-  const cardStyle = {
-    background: '#1e293b',
-    padding: '25px',
-    borderRadius: '15px',
-    width: '100%',
-    boxSizing: 'border-box',
-    marginBottom: '25px'
-  };
+  const containerStyle = { background: '#0f172a', minHeight: '100vh', color: 'white', fontFamily: 'Arial, sans-serif', padding: '20px' };
+  const cardStyle = { background: '#1e293b', padding: '25px', borderRadius: '15px', width: '100%', boxSizing: 'border-box', marginBottom: '25px' };
 
   return (
     <div style={containerStyle}>
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         
-        {/* Header e Botão Editor */}
+        {/* HEADER / MODO EDITOR */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '20px' }}>
-          <button
-            onClick={() => setModoEditor(!modoEditor)}
-            style={{
-              background: modoEditor ? '#ef4444' : '#f59e0b',
-              border: 'none',
-              padding: '10px 18px',
-              borderRadius: '8px',
-              color: 'white',
-              cursor: 'pointer',
-              fontWeight: 'bold',
-            }}
-          >
+          <button onClick={() => {
+            if(!modoEditor) {
+                const senha = prompt('Senha:');
+                if(senha === SENHA_EDITOR) setModoEditor(true);
+            } else { setModoEditor(false); }
+          }} style={{ background: modoEditor ? '#ef4444' : '#f59e0b', border: 'none', padding: '10px 18px', borderRadius: '8px', color: 'white', cursor: 'pointer', fontWeight: 'bold' }}>
             {modoEditor ? 'Sair do Modo Editor' : '🔒 Entrar no Modo Editor'}
           </button>
         </div>
 
-        <h1 style={{ textAlign: 'center', fontSize: '48px', marginBottom: '10px' }}>GINCANA 2026</h1>
-        <p style={{ textAlign: 'center', color: '#cbd5e1', marginBottom: '40px' }}>Painel de Jogos e Avisos</p>
-
+        <h1 style={{ textAlign: 'center', fontSize: '48px', marginBottom: '30px' }}>GINCANA 2026</h1>
+        
+        {/* GRID PRINCIPAL: RANKING E JOGOS RÁPIDOS */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '25px' }}>
           
-          {/* Tabela de Ranking */}
           <div style={cardStyle}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h2>🏆 Classificação</h2>
-              {modoEditor && <button onClick={adicionarEquipe} style={{ background: '#22c55e', color: 'white', border: 'none', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer' }}>+ Equipe</button>}
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+              <h2>🏆 Pontuação</h2>
+              {modoEditor && ranking.length === 0 && <button onClick={adicionarEquipe} style={{ background: '#22c55e', color: 'white', border: 'none', padding: '8px', borderRadius: '5px' }}>+ Criar Time</button>}
             </div>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ background: '#334155' }}>
-                  <th style={{ padding: '12px' }}>#</th>
-                  <th>Equipe</th>
-                  <th>Pontos</th>
-                  {modoEditor && <th>Ação</th>}
-                </tr>
-              </thead>
-              <tbody>
-                {ranking.sort((a, b) => b.pontos - a.pontos).map((time, index) => (
-                  <tr key={time.id} style={{ textAlign: 'center', borderBottom: '1px solid #334155' }}>
-                    <td style={{ padding: '12px' }}>{index + 1}</td>
-                    <td>{time.equipe}</td>
-                    <td style={{ color: '#4ade80', fontWeight: 'bold' }}>{time.pontos}</td>
-                    {modoEditor && (
-                      <td>
-                        <button onClick={() => removerDocumento('ranking', time.id)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}>🗑️</button>
-                      </td>
-                    )}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            {ranking.map((time) => (
+              <div key={time.id} style={{ textAlign: 'center' }}>
+                <h3 style={{ fontSize: '1.5rem', marginBottom: '5px' }}>{time.equipe}</h3>
+                <div style={{ fontSize: '3.5rem', fontWeight: 'bold', color: '#4ade80', marginBottom: '15px' }}>
+                  {time.pontos} <span style={{fontSize: '1rem', color: '#94a3b8'}}>pts</span>
+                </div>
+                {modoEditor && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'center' }}>
+                    <button onClick={() => somarPontos(time.id, time.pontos, 1)} style={{ padding: '8px', background: '#334155', color: 'white', border: '1px solid #4ade80', borderRadius: '5px' }}>+1</button>
+                    <button onClick={() => somarPontos(time.id, time.pontos, 10)} style={{ padding: '8px', background: '#334155', color: 'white', border: '1px solid #4ade80', borderRadius: '5px' }}>+10</button>
+                    <button onClick={() => resetarPontos(time.id)} style={{ padding: '8px', background: '#450a0a', color: 'white', border: 'none', borderRadius: '5px' }}>Zerar</button>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
 
-          {/* Jogos Atuais */}
           <div style={cardStyle}>
-            <h2> Últimos Jogos</h2>
+            <h2>⚽ Placar em Tempo Real</h2>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ background: '#334155' }}>
-                  <th style={{ padding: '10px' }}>Modalidade</th>
-                  <th>Placar</th>
-                  {modoEditor && <th>Gerenciar</th>}
-                </tr>
-              </thead>
-              <tbody>
-                {jogos.map((jogo) => (
+               <tbody>
+                {jogos.slice(-4).map((jogo) => ( // Mostra apenas os 4 últimos jogos aqui
                   <tr key={jogo.id} style={{ textAlign: 'center', borderBottom: '1px solid #334155' }}>
-                    <td style={{ padding: '10px' }}>{jogo.esporte}</td>
+                    <td style={{ padding: '10px', fontSize: '0.9rem' }}>{jogo.esporte}</td>
                     <td>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
                         <span>{jogo.time1}</span>
-                        <strong style={{ color: '#60a5fa', fontSize: '1.2rem' }}>{jogo.placar1} x {jogo.placar2}</strong>
+                        <strong style={{ color: '#60a5fa' }}>{jogo.placar1} x {jogo.placar2}</strong>
                         <span>{jogo.time2}</span>
                       </div>
                     </td>
                     {modoEditor && (
-                      <td>
-                        <div style={{ display: 'flex', gap: '4px' }}>
-                          <input type="number" placeholder="P1" style={{ width: '35px' }} onChange={(e) => atualizarPlacar(jogo.id, 'placar1', e.target.value)} />
-                          <input type="number" placeholder="P2" style={{ width: '35px' }} onChange={(e) => atualizarPlacar(jogo.id, 'placar2', e.target.value)} />
-                          <button onClick={() => removerDocumento('jogos', jogo.id)} style={{ background: '#ef4444', color: 'white', border: 'none', borderRadius: '4px' }}>X</button>
-                        </div>
+                      <td style={{display: 'flex', gap: '2px'}}>
+                        <input type="number" style={{ width: '30px', background: '#0f172a', color: 'white', border: '1px solid #334155' }} onChange={(e) => atualizarPlacar(jogo.id, 'placar1', e.target.value)} />
+                        <input type="number" style={{ width: '30px', background: '#0f172a', color: 'white', border: '1px solid #334155' }} onChange={(e) => atualizarPlacar(jogo.id, 'placar2', e.target.value)} />
                       </td>
                     )}
                   </tr>
@@ -231,56 +171,73 @@ export default function GincanaSite() {
           </div>
         </div>
 
-        {/* Formulários do Editor */}
-        {modoEditor && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '25px', marginTop: '20px' }}>
-            <div style={cardStyle}>
-              <h3>➕ Novo Jogo</h3>
-              <input style={{width: '100%', marginBottom: '10px', padding: '8px'}} placeholder="Esporte" value={novoJogo.esporte} onChange={e => setNovoJogo({...novoJogo, esporte: e.target.value})} />
-              <input style={{width: '100%', marginBottom: '10px', padding: '8px'}} placeholder="Horário (ex: 14:00)" value={novoJogo.horario} onChange={e => setNovoJogo({...novoJogo, horario: e.target.value})} />
-              <input style={{width: '100%', marginBottom: '10px', padding: '8px'}} placeholder="Time 1" value={novoJogo.time1} onChange={e => setNovoJogo({...novoJogo, time1: e.target.value})} />
-              <input style={{width: '100%', marginBottom: '10px', padding: '8px'}} placeholder="Time 2" value={novoJogo.time2} onChange={e => setNovoJogo({...novoJogo, time2: e.target.value})} />
-              <select style={{width: '100%', marginBottom: '10px', padding: '8px'}} value={novoJogo.dia} onChange={e => setNovoJogo({...novoJogo, dia: e.target.value})}>
-                <option>Dia 1</option><option>Dia 2</option><option>Dia 3</option>
-              </select>
-              <button onClick={adicionarJogo} style={{ width: '100%', padding: '10px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>Salvar Jogo</button>
-            </div>
-
-            <div style={cardStyle}>
-              <h3>🎯 Novo Evento/Aviso</h3>
-              <input style={{width: '100%', marginBottom: '10px', padding: '8px'}} placeholder="Nome do evento" value={novaAtividade.nome} onChange={e => setNovaAtividade({...novaAtividade, nome: e.target.value})} />
-              <input style={{width: '100%', marginBottom: '10px', padding: '8px'}} placeholder="Horário" value={novaAtividade.horario} onChange={e => setNovaAtividade({...novaAtividade, horario: e.target.value})} />
-              <input style={{width: '100%', marginBottom: '10px', padding: '8px'}} placeholder="Local" value={novaAtividade.local} onChange={e => setNovaAtividade({...novaAtividade, local: e.target.value})} />
-              <select style={{width: '100%', marginBottom: '10px', padding: '8px'}} value={novaAtividade.dia} onChange={e => setNovaAtividade({...novaAtividade, dia: e.target.value})}>
-                <option>Dia 1</option><option>Dia 2</option><option>Dia 3</option>
-              </select>
-              <button onClick={adicionarAtividade} style={{ width: '100%', padding: '10px', background: '#a855f7', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>Salvar Evento</button>
+        {/* SEÇÃO DE CRONOGRAMA (ONDE A VARIÁVEL É USADA) */}
+        <div style={cardStyle}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+            <h2>📅 Cronograma de Eventos</h2>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              {['Dia 1', 'Dia 2', 'Dia 3'].map(dia => (
+                <button key={dia} onClick={() => setDiaAtivo(dia)} style={{ background: diaAtivo === dia ? '#3b82f6' : '#334155', border: 'none', padding: '5px 12px', borderRadius: '5px', color: 'white', cursor: 'pointer' }}>{dia}</button>
+              ))}
             </div>
           </div>
-        )}
-
-        {/* Cronograma Final */}
-        <div style={cardStyle}>
-          <h2>📅 Cronograma Completo</h2>
-          {['Dia 1', 'Dia 2', 'Dia 3'].map((dia) => (
-            <div key={dia} style={{ marginBottom: '30px' }}>
-              <h3 style={{ color: '#60a5fa', borderBottom: '1px solid #334155', paddingBottom: '5px' }}>{dia}</h3>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <tbody>
-                  {cronogramaCompleto.filter(i => i.dia === dia).map((item, index) => (
-                    <tr key={index} style={{ borderBottom: '1px solid #1e293b' }}>
-                      <td style={{ padding: '10px', width: '100px', color: '#94a3b8' }}>{item.horario}</td>
-                      <td style={{ fontWeight: 'bold' }}>{'esporte' in item ? item.esporte : item.nome}</td>
-                      <td style={{ textAlign: 'right', color: '#cbd5e1' }}>
-                        {'esporte' in item ? `${item.time1} x ${item.time2}` : item.local}
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ color: '#94a3b8', borderBottom: '2px solid #334155' }}>
+                  <th style={{ padding: '10px' }}>Hora</th>
+                  <th>Evento</th>
+                  <th>Detalhes</th>
+                  {modoEditor && <th>Ação</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {cronogramaCompleto.filter(item => item.dia === diaAtivo).map((item) => (
+                  <tr key={item.id} style={{ borderBottom: '1px solid #334155' }}>
+                    <td style={{ padding: '12px 10px' }}>{item.horario}</td>
+                    <td style={{ fontWeight: 'bold' }}>{item.esporte || item.nome}</td>
+                    <td style={{ color: '#94a3b8' }}>
+                      {item.time1 ? `${item.time1} vs ${item.time2}` : item.local}
+                    </td>
+                    {modoEditor && (
+                      <td>
+                        <button onClick={() => removerDocumento(item.esporte ? 'jogos' : 'atividades', item.id)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>🗑️</button>
                       </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ))}
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
+
+        {/* ÁREA DO EDITOR: FORMULÁRIOS */}
+        {modoEditor && (
+           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '25px' }}>
+            <div style={cardStyle}>
+                <h3>➕ Novo Jogo</h3>
+                <input style={{width: '100%', marginBottom: '10px', padding: '8px'}} placeholder="Esporte (Futsal, etc)" value={novoJogo.esporte} onChange={e => setNovoJogo({...novoJogo, esporte: e.target.value})} />
+                <input style={{width: '100%', marginBottom: '10px', padding: '8px'}} placeholder="Horário (ex: 09:00)" value={novoJogo.horario} onChange={e => setNovoJogo({...novoJogo, horario: e.target.value})} />
+                <input style={{width: '100%', marginBottom: '10px', padding: '8px'}} placeholder="Time 1" value={novoJogo.time1} onChange={e => setNovoJogo({...novoJogo, time1: e.target.value})} />
+                <input style={{width: '100%', marginBottom: '10px', padding: '8px'}} placeholder="Time 2" value={novoJogo.time2} onChange={e => setNovoJogo({...novoJogo, time2: e.target.value})} />
+                <select style={{width: '100%', marginBottom: '10px', padding: '8px'}} value={novoJogo.dia} onChange={e => setNovoJogo({...novoJogo, dia: e.target.value})}>
+                  <option>Dia 1</option><option>Dia 2</option><option>Dia 3</option>
+                </select>
+                <button onClick={adicionarJogo} style={{ width: '100%', padding: '10px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px' }}>Salvar Jogo</button>
+            </div>
+
+            <div style={cardStyle}>
+                <h3>➕ Atividade / Aviso</h3>
+                <input style={{width: '100%', marginBottom: '10px', padding: '8px'}} placeholder="Evento (Almoço, Abertura...)" value={novaAtividade.nome} onChange={e => setNovaAtividade({...novaAtividade, nome: e.target.value})} />
+                <input style={{width: '100%', marginBottom: '10px', padding: '8px'}} placeholder="Horário" value={novaAtividade.horario} onChange={e => setNovaAtividade({...novaAtividade, horario: e.target.value})} />
+                <input style={{width: '100%', marginBottom: '10px', padding: '8px'}} placeholder="Local" value={novaAtividade.local} onChange={e => setNovaAtividade({...novaAtividade, local: e.target.value})} />
+                <select style={{width: '100%', marginBottom: '10px', padding: '8px'}} value={novaAtividade.dia} onChange={e => setNovaAtividade({...novaAtividade, dia: e.target.value})}>
+                  <option>Dia 1</option><option>Dia 2</option><option>Dia 3</option>
+                </select>
+                <button onClick={adicionarAtividade} style={{ width: '100%', padding: '10px', background: '#22c55e', color: 'white', border: 'none', borderRadius: '8px' }}>Salvar Atividade</button>
+            </div>
+           </div>
+        )}
       </div>
     </div>
   );
