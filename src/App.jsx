@@ -139,7 +139,6 @@ export default function GincanaSite() {
       </div>
       {modoEditor && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'center' }}>
-          <button onClick={() => somarPontos(time.id, time.pontos, 1)} style={{ padding: '8px 12px', background: '#334155', color: 'white', border: '1px solid #4ade80', borderRadius: '5px', cursor: 'pointer' }}>+1</button>
           <button onClick={() => somarPontos(time.id, time.pontos, 10)} style={{ padding: '8px 12px', background: '#334155', color: 'white', border: '1px solid #4ade80', borderRadius: '5px', cursor: 'pointer' }}>+10</button>
           <button onClick={() => somarPontos(time.id, time.pontos, 100)} style={{ padding: '8px 12px', background: '#4ade80', color: '#0f172a', border: 'none', borderRadius: '5px', fontWeight: 'bold', cursor: 'pointer' }}>+100</button>
           <button onClick={() => resetarPontos(time.id)} style={{ padding: '8px 12px', background: '#450a0a', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>Zerar</button>
