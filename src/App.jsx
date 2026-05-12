@@ -153,9 +153,7 @@ export default function GincanaSite() {
           </button>
 
           {/* Outras opções */}
-          <button onClick={() => somarPontos(time.id, time.pontos, 10)} style={{ padding: '10px 15px', background: '#334155', color: 'white', border: '1px solid #4ade80', borderRadius: '6px', cursor: 'pointer' }}>
-            +10
-          </button>
+        
           
           <button onClick={() => resetarPontos(time.id)} style={{ padding: '10px 15px', background: '#450a0a', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
             Zerar
