@@ -9,7 +9,7 @@ import {
 } from 'firebase/firestore';
 import { db } from './firebase';
 
-const SENHA_EDITOR = 'gincana2026';
+const SENHA_EDITOR = 'CGH';
 
 export default function GincanaSite() {
   const [modoEditor, setModoEditor] = useState(false);
