@@ -99,7 +99,7 @@ export default function GincanaSite() {
 
         {/* AO VIVO (COM LÓGICA DE BASQUETE) */}
         <div style={cardStyle}>
-          <h2 style={{ textAlign: 'center', fontSize: '1.2rem', marginBottom: '15px' }}>AO VIVO</h2>git
+          <h2 style={{ textAlign: 'center', fontSize: '1.2rem', marginBottom: '15px' }}>AO VIVO</h2>
           {jogos.filter(j => !j.finalizado).map((jogo) => {
             const nomeEsporte = (jogo.esporte || "").toLowerCase();
             const isVolei = nomeEsporte.includes('vô') || nomeEsporte.includes('vo');
