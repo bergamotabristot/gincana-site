@@ -157,7 +157,7 @@ export default function GincanaSite() {
         </div>
 
         <h1 style={{ textAlign: 'center', fontSize: '48px', marginBottom: '10px' }}>GINCANA 2026</h1>
-        <p style={{ textAlign: 'center', color: '#cbd5e1', marginBottom: '40px' }}>Painel Oficial de Resultados</p>
+        <p style={{ textAlign: 'center', color: '#cbd5e1', marginBottom: '40px' }}>Painel de Jogos e Avisos</p>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '25px' }}>
           
@@ -195,7 +195,7 @@ export default function GincanaSite() {
 
           {/* Jogos Atuais */}
           <div style={cardStyle}>
-            <h2>⚽ Últimos Jogos</h2>
+            <h2> Últimos Jogos</h2>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ background: '#334155' }}>
