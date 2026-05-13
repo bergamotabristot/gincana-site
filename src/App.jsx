@@ -20,7 +20,8 @@ export default function GincanaSite() {
 
   const [novoJogo, setNovoJogo] = useState({
     esporte: '', horario: '', time1: '', time2: '', dia: 'Dia 1', 
-    placar1: 0, placar2: 0, ptsVolei1: 0, ptsVolei2: 0, finalizado: false
+    placar1: 0, placar2: 0, ptsVolei1: 0, ptsVolei2: 0, 
+    finalizado: false, emAndamento: false // Adicionado emAndamento
   });
 
   const [novaAtividade, setNovaAtividade] = useState({
@@ -53,7 +54,12 @@ export default function GincanaSite() {
     const p1 = Number(jogo.placar1) || 0;
     const p2 = Number(jogo.placar2) || 0;
     let vencedor = p1 > p2 ? jogo.time1 : p2 > p1 ? jogo.time2 : "Empate";
-    await updateDoc(doc(db, 'jogos', jogo.id), { finalizado: true, vencedor, placarFinal: `${p1} x ${p2}` });
+    await updateDoc(doc(db, 'jogos', jogo.id), { 
+      finalizado: true, 
+      emAndamento: false, 
+      vencedor, 
+      placarFinal: `${p1} x ${p2}` 
+    });
   };
 
   const cardStyle = { background: '#1e293b', padding: '25px', borderRadius: '15px', marginBottom: '25px' };
@@ -77,7 +83,7 @@ export default function GincanaSite() {
 
         <h1 style={{ textAlign: 'center', fontSize: '2.2rem', marginBottom: '40px', fontWeight: 'bold' }}>GINCANA 2026</h1>
 
-        {/* RANKING - ESPAÇAMENTO MELHORADO */}
+        {/* RANKING */}
         <div style={cardStyle}>
           <h2 style={{fontSize:'1rem', color:'#94a3b8', textAlign:'center', marginBottom:'25px'}}>🏆 PONTUAÇÃO GERAL</h2>
           {ranking.sort((a,b) => b.pontos - a.pontos).map((time) => (
@@ -94,10 +100,13 @@ export default function GincanaSite() {
           ))}
         </div>
 
-        {/* AO VIVO - ESPAÇAMENTO MELHORADO */}
+        {/* AO VIVO - MOSTRA APENAS JOGOS EM ANDAMENTO */}
         <div style={cardStyle}>
-          <h2 style={{ textAlign: 'center', fontSize: '1.2rem', marginBottom: '20px', color: '#94a3b8' }}>AO VIVO</h2>
-          {jogos.filter(j => !j.finalizado).map((jogo) => {
+          <h2 style={{ textAlign: 'center', fontSize: '1.2rem', marginBottom: '20px', color: '#ef4444' }}>🔴 AO VIVO</h2>
+          {jogos.filter(j => j.emAndamento).length === 0 && (
+            <p style={{textAlign: 'center', color: '#64748b', fontSize: '14px'}}>Nenhuma partida iniciada no momento.</p>
+          )}
+          {jogos.filter(j => j.emAndamento).map((jogo) => {
             const esporte = (jogo.esporte || "").toLowerCase();
             const isBasquete = esporte.includes('basq');
             const isVolei = esporte.includes('vol') || esporte.includes('vô');
@@ -154,57 +163,72 @@ export default function GincanaSite() {
           })}
         </div>
 
-        {/* CRONOGRAMA CORRIGIDO */}
-<div style={cardStyle}>
-  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-    <h2 style={{ fontSize: '1.1rem', color: '#94a3b8' }}>📅 CRONOGRAMA</h2>
-    <div style={{ display: 'flex', gap: '8px' }}>
-      {['Dia 1', 'Dia 2', 'Dia 3'].map(d => (
-        <button key={d} onClick={() => setDiaAtivo(d)} style={{ padding: '6px 12px', fontSize: '12px', borderRadius: '8px', border: 'none', background: diaAtivo === d ? '#3b82f6' : '#334155', color: 'white' }}>{d}</button>
-      ))}
-    </div>
-  </div>
-
-  {jogos.concat(atividades)
-    .filter(i => i.dia === diaAtivo)
-    .sort((a, b) => {
-      // Função para converter "6h", "06:00" ou "14:30" em um formato comparável
-      const formatTime = (t) => {
-        if (!t) return "99:99";
-        let time = t.toLowerCase().replace('h', ':'); // transforma "6h" em "6:"
-        if (!time.includes(':')) time += ':00';
-        let [hrs, mins] = time.split(':');
-        return `${hrs.padStart(2, '0')}:${(mins || '00').padStart(2, '0')}`;
-      };
-      return formatTime(a.horario).localeCompare(formatTime(b.horario));
-    })
-    .map(item => (
-    <div key={item.id} style={{ display: 'grid', gridTemplateColumns: '75px 1fr 1.2fr', alignItems: 'center', padding: '18px 0', borderBottom: '1px solid #334155', fontSize: '14px' }}>
-      <div style={{ color: '#94a3b8', fontWeight: '500' }}>{item.horario.includes('h') ? item.horario : `${item.horario}h`}</div>
-      <div style={{ fontWeight: 'bold', textTransform: 'capitalize' }}>{item.esporte || item.nome}</div>
-      <div style={{ textAlign: 'right', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '10px' }}>
-        {item.finalizado ? (
-          <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'right' }}>
-            <span style={{ color: '#4ade80', fontWeight: 'bold' }}>🏆 {item.vencedor}</span>
-            <span style={{ color: '#94a3b8', fontSize: '11px' }}>({item.placarFinal})</span>
+        {/* CRONOGRAMA */}
+        <div style={cardStyle}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <h2 style={{ fontSize: '1.1rem', color: '#94a3b8' }}>📅 CRONOGRAMA</h2>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              {['Dia 1', 'Dia 2', 'Dia 3'].map(d => (
+                <button key={d} onClick={() => setDiaAtivo(d)} style={{ padding: '6px 12px', fontSize: '12px', borderRadius: '8px', border: 'none', background: diaAtivo === d ? '#3b82f6' : '#334155', color: 'white' }}>{d}</button>
+              ))}
+            </div>
           </div>
-        ) : (
-          <span style={{ color: '#94a3b8', fontStyle: item.time1 ? 'normal' : 'italic' }}>
-            {item.time1 ? `${item.time1} vs ${item.time2}` : `📍 ${item.local || 'Local a definir'}`}
-          </span>
-        )}
-        {modoEditor && (
-          <button 
-            onClick={() => { if(confirm("Excluir item?")) deleteDoc(doc(db, item.esporte ? 'jogos' : 'atividades', item.id)) }} 
-            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px', padding: '5px' }}
-          >
-            🗑️
-          </button>
-        )}
-      </div>
-    </div>
-  ))}
-</div>
+
+          {jogos.concat(atividades)
+            .filter(i => i.dia === diaAtivo)
+            .sort((a, b) => {
+              const formatTime = (t) => {
+                if (!t) return "99:99";
+                let time = t.toLowerCase().replace('h', ':');
+                if (!time.includes(':')) time += ':00';
+                let [hrs, mins] = time.split(':');
+                return `${hrs.padStart(2, '0')}:${(mins || '00').padStart(2, '0')}`;
+              };
+              return formatTime(a.horario).localeCompare(formatTime(b.horario));
+            })
+            .map(item => (
+            <div key={item.id} style={{ display: 'grid', gridTemplateColumns: '75px 1fr 1.2fr', alignItems: 'center', padding: '18px 0', borderBottom: '1px solid #334155', fontSize: '14px' }}>
+              <div style={{ color: '#94a3b8', fontWeight: '500' }}>{item.horario.includes('h') ? item.horario : `${item.horario}h`}</div>
+              <div style={{ fontWeight: 'bold', textTransform: 'capitalize' }}>{item.esporte || item.nome}</div>
+              <div style={{ textAlign: 'right', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '10px' }}>
+                
+                {/* LÓGICA DE STATUS NO CRONOGRAMA */}
+                {item.finalizado ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'right' }}>
+                    <span style={{ color: '#4ade80', fontWeight: 'bold' }}>🏆 {item.vencedor}</span>
+                    <span style={{ color: '#94a3b8', fontSize: '11px' }}>({item.placarFinal})</span>
+                  </div>
+                ) : item.emAndamento ? (
+                  <span style={{ color: '#ef4444', fontWeight: 'bold', animation: 'pulse 2s infinite' }}>🔴 EM ANDAMENTO</span>
+                ) : (
+                  <span style={{ color: '#94a3b8', fontStyle: item.time1 ? 'normal' : 'italic' }}>
+                    {item.time1 ? `${item.time1} vs ${item.time2}` : `📍 ${item.local || 'Local a definir'}`}
+                  </span>
+                )}
+
+                {/* BOTÕES DO EDITOR NO CRONOGRAMA */}
+                {modoEditor && (
+                  <div style={{display: 'flex', gap: '5px'}}>
+                    {item.time1 && !item.finalizado && !item.emAndamento && (
+                      <button 
+                        onClick={() => updateDoc(doc(db, 'jogos', item.id), { emAndamento: true })}
+                        style={{ background: '#16a34a', color: 'white', border: 'none', borderRadius: '4px', padding: '4px 8px', fontSize: '10px', cursor: 'pointer' }}
+                      >
+                        INICIAR
+                      </button>
+                    )}
+                    <button 
+                      onClick={() => { if(confirm("Excluir item?")) deleteDoc(doc(db, item.esporte ? 'jogos' : 'atividades', item.id)) }} 
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px' }}
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
 
         {/* ÁREA DE CRIAÇÃO */}
         {modoEditor && (
@@ -217,15 +241,23 @@ export default function GincanaSite() {
                 <input style={inputStyle} placeholder="Time 1" value={novoJogo.time1} onChange={e => setNovoJogo({...novoJogo, time1: e.target.value})} />
                 <input style={inputStyle} placeholder="Time 2" value={novoJogo.time2} onChange={e => setNovoJogo({...novoJogo, time2: e.target.value})} />
               </div>
-              <button onClick={async () => { await addDoc(collection(db, 'jogos'), {...novoJogo, dia: diaAtivo, placar1:0, placar2:0}); alert('Jogo Salvo!'); }} style={{...btnStyle, width:'100%', background:'#3b82f6', color:'white'}}>Criar Jogo</button>
+              <button onClick={async () => { 
+                await addDoc(collection(db, 'jogos'), {...novoJogo, dia: diaAtivo, placar1:0, placar2:0, finalizado: false, emAndamento: false}); 
+                setNovoJogo({esporte: '', horario: '', time1: '', time2: '', dia: diaAtivo, placar1: 0, placar2: 0, ptsVolei1: 0, ptsVolei2: 0, finalizado: false, emAndamento: false});
+                alert('Jogo Salvo no Cronograma!'); 
+              }} style={{...btnStyle, width:'100%', background:'#3b82f6', color:'white'}}>Criar Jogo</button>
             </div>
 
             <div style={cardStyle}>
               <h3 style={{marginBottom:'20px'}}>Atividade</h3>
               <input style={inputStyle} placeholder="Nome" value={novaAtividade.nome} onChange={e => setNovaAtividade({...novaAtividade, nome: e.target.value})} />
-              <input style={inputStyle} placeholder="Horário (Ex: 10:00)" value={novaAtividade.horario} onChange={e => setNovaAtividade({...novaAtividade, horario: e.target.value})} />
+              <input style={inputStyle} placeholder="Horário (Ex: 10:00)" value={novaAtividade.horario} onChange={e => setNovoJogo({...novaAtividade, horario: e.target.value})} />
               <input style={inputStyle} placeholder="Local" value={novaAtividade.local} onChange={e => setNovaAtividade({...novaAtividade, local: e.target.value})} />
-              <button onClick={async () => { await addDoc(collection(db, 'atividades'), {...novaAtividade, dia: diaAtivo}); alert('Atividade Salva!'); }} style={{...btnStyle, width:'100%', background:'#a855f7', color:'white'}}>Criar Atividade</button>
+              <button onClick={async () => { 
+                await addDoc(collection(db, 'atividades'), {...novaAtividade, dia: diaAtivo}); 
+                setNovaAtividade({nome: '', horario: '', local: '', dia: diaAtivo});
+                alert('Atividade Salva!'); 
+              }} style={{...btnStyle, width:'100%', background:'#a855f7', color:'white'}}>Criar Atividade</button>
             </div>
           </>
         )}
